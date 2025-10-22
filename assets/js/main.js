@@ -27,6 +27,48 @@ if (themePreference === "d2c_theme_dark") {
 $("#d2c_theme_changer").change(function () {
 	toggleTheme($(this).prop("checked"));
 	localStorage.setItem("themeSwitch", $(this).prop("checked"));
+	// Password visibility toggle (works for input-group-text[data-password] and button addons)
+	$(document).on('click', '.input-group-text[data-password], button[id^="button-addon"]', function (e) {
+		e.preventDefault();
+		const $btn = $(this);
+		const $group = $btn.closest('.input-group');
+		let $input = $group.find('input').filter(function () {
+			const t = $(this).attr('type');
+			return t === 'password' || t === 'text';
+		}).first();
+
+		// Fallback: some templates use aria-describedby on the input pointing to the button id
+		if (!$input || !$input.length) {
+			const btnId = $btn.attr('id');
+			if (btnId) {
+				$input = $(`input[aria-describedby="${btnId}"]`).first();
+			}
+		}
+
+		if (!$input || !$input.length) return;
+
+		const isPassword = $input.attr('type') === 'password';
+		try {
+			$input.attr('type', isPassword ? 'text' : 'password');
+		} catch (err) {
+			// Some older browsers may not allow changing type; create replacement input as fallback
+			const $newInput = $input.clone().attr('type', isPassword ? 'text' : 'password');
+			$input.replaceWith($newInput);
+			$input = $newInput;
+		}
+
+		const $icon = $btn.find('i');
+		if ($icon.length) {
+			// Keep any style prefix (fa, far, fas) and only toggle the specific icon classes
+			$icon.toggleClass('fa-eye');
+			$icon.toggleClass('fa-eye-slash');
+		}
+
+		if ($btn.is('[data-password]')) {
+			$btn.attr('data-password', isPassword ? 'true' : 'false');
+		}
+	});
+
 });
 
 // Preloader
